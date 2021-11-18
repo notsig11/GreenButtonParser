@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-add_executable(greenbutton_reader greenbutton.cpp)
+add_executable(greenbutton_reader greenbutton.cpp PgSQLDatabase.cpp)
 target_compile_features(greenbutton_reader PUBLIC cxx_std_20)
 set_target_properties(greenbutton_reader PROPERTIES CXX_EXTENSIONS OFF)
 
