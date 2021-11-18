@@ -1,0 +1,6 @@
+CREATE TABLE meter_readings (
+	id SERIAL NOT NULL PRIMARY KEY,
+
+	reading_start TIMESTAMP WITH TIME ZONE,
+	usage SMALLINT NOT NULL
+);

@@ -5,5 +5,4 @@ The link returns an XML file specified by the [GreenButtonAlliance](https://gith
 
 ## Future plans
 1. cURL support for fetching data directly
-1. PostgreSQL support for storing meter readings
 1. Grafana Dashboard?
