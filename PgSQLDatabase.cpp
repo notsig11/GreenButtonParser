@@ -3,7 +3,6 @@
 #include <iostream>
 #include "fmt/chrono.h"
 
-// TODO: Account for existing data/only insert new data.  May need to parse/store the start/end from XML
 bool PgSQLDatabase::insertReading(const MeterReading& r) {
 	if (!m_conn.is_open())
 		return false;
@@ -25,13 +24,18 @@ bool PgSQLDatabase::insertBulk(MeterReadingIterator begin, MeterReadingIterator 
 	if (!m_conn.is_open())
 		return false;
 
+	// Get date range we already have stored
+	auto [min, max] = getStoredRange();
+
 	pqxx::work txn {m_conn};
 	try {
 		pqxx::stream_to stream {txn, "meter_readings", std::vector<std::string> {"reading_start", "usage"}};
 		int i {0};
 		for (auto reading = begin; reading != end; reading++) {
-			stream << std::make_tuple(fmt::format("{:%FT%TZ}", fmt::localtime(reading->start)), reading->reading);
-			i++;
+			if (reading->start > max || reading->start < min) {
+				stream << std::make_tuple(fmt::format("{:%FT%T%z}", fmt::localtime(reading->start)), reading->reading);
+				i++;
+			}
 		}
 		std::cerr << fmt::format("Wrote {} rows via stream_to.\n", i);
 		stream.complete();
@@ -44,17 +48,20 @@ bool PgSQLDatabase::insertBulk(MeterReadingIterator begin, MeterReadingIterator 
 	return true;
 }
 
-std::time_t PgSQLDatabase::getLastReading() {
+std::pair<std::time_t, std::time_t> PgSQLDatabase::getStoredRange() {
 	if (!m_conn.is_open())
-		return false;
+		return std::make_pair(0, 0);
 
 	pqxx::work txn {m_conn};
 	try {
-		auto res = txn.exec("");
+		// DO NOT use timezone here!  Postgres gives us the epoch at the stored TZ which is what the XML gives us.
+		auto res = txn.exec("SELECT EXTRACT(EPOCH FROM MIN(reading_start)) AS start, \
+																EXTRACT(EPOCH FROM MAX(reading_start)) AS end \
+																FROM meter_readings;");
+		return std::make_pair(res[0]["start"].as<uint64_t>(), res[0]["end"].as<uint64_t>());
 	}
 	catch(const std::exception& e) {
 		std::cerr << fmt::format("Exception checking for last reading in pgsql: {}\n", e.what());
-		return false;
+		return std::make_pair(0, 0);
 	}
-	return false; // TODO Implement me!
 }

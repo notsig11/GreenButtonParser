@@ -17,7 +17,7 @@ public:
 	bool insertReading(const MeterReading& r);
 	bool insertBulk(MeterReadingIterator begin, MeterReadingIterator end);
 
-	std::time_t getLastReading();
+	std::pair<std::time_t, std::time_t> getStoredRange();
 
 private:
 	pqxx::connection m_conn;
