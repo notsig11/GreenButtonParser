@@ -55,8 +55,8 @@ std::pair<std::time_t, std::time_t> PgSQLDatabase::getStoredRange() {
 	pqxx::work txn {m_conn};
 	try {
 		// DO NOT use timezone here!  Postgres gives us the epoch at the stored TZ which is what the XML gives us.
-		auto res = txn.exec("SELECT EXTRACT(EPOCH FROM MIN(reading_start)) AS start, \
-																EXTRACT(EPOCH FROM MAX(reading_start)) AS end \
+		auto res = txn.exec("SELECT TRUNC(EXTRACT(EPOCH FROM MIN(reading_start))) AS start, \
+																TRUNC(EXTRACT(EPOCH FROM MAX(reading_start))) AS end \
 																FROM meter_readings;");
 		return std::make_pair(res[0]["start"].as<uint64_t>(), res[0]["end"].as<uint64_t>());
 	}
